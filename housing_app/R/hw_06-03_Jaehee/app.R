@@ -1,6 +1,7 @@
 library(shiny)
 library(tidyverse)
 library(broom)
+library(ggstance)
 
 estate <- read_csv("estate.csv", col_types = cols("AC" = col_factor(), "Pool" = col_factor(), "Highway" = col_factor()))
 estate %>% 
@@ -21,14 +22,11 @@ ui <- fluidPage(
                                               value = 40 ), 
                                   numericInput("num", "Null Value", value = 0),
                                   tableOutput("t_test")
-
-                                
                      ), 
                      mainPanel(
                          plotOutput("distPlot")
                      )
                  )), 
-        
         tabPanel("Bivariate",
                  sidebarLayout(position = "left", 
                                sidebarPanel(varSelectInput("var1_0", "X Variable", data = estate, selected = "Area"),
@@ -41,13 +39,11 @@ ui <- fluidPage(
                      plotOutput("plot")
                  )
                  )),
-
         tabPanel("Spreadsheet", 
         dataTableOutput("table")
         )
 )
 )
-
 server <- function(input, output) {
 
     output$distPlot <- renderPlot({
@@ -64,9 +60,7 @@ server <- function(input, output) {
                 ggplot(estate, aes(x = !!input$var1)) + 
                     geom_histogram(bins = input$bins)
             }
-
         }
-
         else{
                 if(input$log){
                     validate(
@@ -76,52 +70,51 @@ server <- function(input, output) {
                 }
             ggplot(estate, aes(x = !!input$var1))+ geom_bar()
             }
-
 })
-    
-    output$t_test <- renderPrint({
-        t.test() %>%
-            tidy() %>%
-            select(estimate, `P-value` = p.value, Lower = conf.low, Higher = conf.high)
-    })
-
-    
-    
-    
+    # x1 <- rnorm(input$n1, input$mean1, input$sd1)
+    # x2 <- rnorm(input$n2, input$mean2, input$sd2)
+    # t_test(x1, x2)
+    # output$t_test <- renderPrint({
+    #     t.test() %>%
+    #         tidy() %>%
+    #         select(estimate, `P-value` = p.value, Lower = conf.low, Higher = conf.high)
+    # })
     output$plot <- renderPlot({
-    ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) 
-        
-        if (is.numeric(estate[[input$var1_0]]) && is.numeric(estate[[input$var2_0]]) ){
-            if(input$log_1){
-                ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0))+
-                    scale_x_log10()+
-                    geom_point()+
-                    labs(x = paste("Log(", input$var1_0,")"))
-            }
-            if(input$log_2){
-                ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0))+
-                    scale_y_log10()+
-                    geom_point()+
-                    labs(x = paste("Log(", input$var2_0,")"))
-                
-            }
-            if(input$ols){
+        ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) 
+        if (is.numeric(estate[[input$var1_0]]) && is.numeric(estate[[input$var2_0]])){
+            if(input$log_1 && input$log_2 && input$ols){
                 ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0))+
                     geom_point()+
+                    scale_x_log10() +
+                    scale_y_log10() +
                     geom_smooth(method = "lm")
-                
+            }
+            else if(input$log_1 && input$log_2){
+                ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0))+
+                    geom_point()+
+                    scale_x_log10() +
+                    scale_y_log10()
+            }
+            else if(input$log_1){
+                ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0))+
+                    geom_point()+
+                    scale_x_log10()
+            }
+            else if (input$log_2){
+                ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0))+
+                    geom_point()+
+                    scale_y_log10()
             }
             else{
                 ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) +
-                    geom_point() 
+                    geom_point()
             }
-       }
-       
-        else if (is.factor(estate[[input$var1_0]]) && is.numeric(estate[[input$var2_0]])){
-            if(input$log_1){
-                validate(
-                    need(is.double(estate[[input$var1_0]])),
-                         "not numeric")
+        }
+       else if (is.factor(estate[[input$var1_0]]) && is.numeric(estate[[input$var2_0]])){
+            if(input$log_2){
+                ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) + 
+                    geom_boxplot() +
+                    scale_y_log10()
             }
               else{
                   ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) + 
@@ -129,7 +122,17 @@ server <- function(input, output) {
                   }
                       
         }
-        
+        else if (is.numeric(estate[[input$var1_0]]) && is.factor(estate[[input$var2_0]])){
+            if(input$log_1){
+                ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) + 
+                    geom_boxploth() +
+                scale_x_log10()
+            }
+            else{
+                ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) + 
+                    geom_boxploth()
+            }
+        }
         else {
             if(input$log){
                 ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) + 
@@ -140,19 +143,11 @@ server <- function(input, output) {
                 ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) + 
                     geom_jitter()
             }
-            
         }
-        
-        
-        
     })
             output$table <- renderDataTable({
-
             keep(estate, ~ typeof(.) == "double")
-
         })
-
 }
-
 shinyApp(ui = ui, server = server)
 

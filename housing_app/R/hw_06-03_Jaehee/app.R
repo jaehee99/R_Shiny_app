@@ -45,11 +45,8 @@ ui <- fluidPage(
 )
 )
 server <- function(input, output) {
-
     output$distPlot <- renderPlot({
-
      ggplot(estate, aes(x = !!input$var1))
-
                 if (is.numeric(estate[[input$var1]])){
             if(input$log){
                 ggplot(estate, aes(x = !!input$var1)) + 
@@ -71,14 +68,6 @@ server <- function(input, output) {
             ggplot(estate, aes(x = !!input$var1))+ geom_bar()
             }
 })
-    # x1 <- rnorm(input$n1, input$mean1, input$sd1)
-    # x2 <- rnorm(input$n2, input$mean2, input$sd2)
-    # t_test(x1, x2)
-    # output$t_test <- renderPrint({
-    #     t.test() %>%
-    #         tidy() %>%
-    #         select(estimate, `P-value` = p.value, Lower = conf.low, Higher = conf.high)
-    # })
     output$plot <- renderPlot({
         ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) 
         if (is.numeric(estate[[input$var1_0]]) && is.numeric(estate[[input$var2_0]])){
@@ -88,6 +77,12 @@ server <- function(input, output) {
                     scale_x_log10() +
                     scale_y_log10() +
                     geom_smooth(method = "lm")
+            }
+            else if(input$ols){
+                ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0))+
+                    geom_point()+
+                    geom_smooth(method = "lm")
+                
             }
             else if(input$log_1 && input$log_2){
                 ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0))+
@@ -116,17 +111,28 @@ server <- function(input, output) {
                     geom_boxplot() +
                     scale_y_log10()
             }
+           else if(input$log_1){
+                   validate(
+                       need(is.double(estate[[input$var1_0]]),
+                            "not numeric")
+                   )
+           }
               else{
                   ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) + 
                       geom_boxplot()
                   }
-                      
         }
         else if (is.numeric(estate[[input$var1_0]]) && is.factor(estate[[input$var2_0]])){
             if(input$log_1){
                 ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) + 
                     geom_boxploth() +
                 scale_x_log10()
+            }
+            else if(input$log_2){
+                validate(
+                    need(is.double(estate[[input$var2_0]]),
+                         "not numeric")
+                )
             }
             else{
                 ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) + 

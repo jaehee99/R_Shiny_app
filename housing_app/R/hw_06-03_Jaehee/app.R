@@ -4,7 +4,6 @@ library(shiny)
 library(tidyverse)
 library(broom)
 library(ggstance)
-
 estate <- read_csv("../../data/estate.csv", col_types = cols("AC" = col_factor(), "Pool" = col_factor(), "Highway" = col_factor()))
 estate %>% 
     mutate(Price = Price/1000) %>%  
@@ -30,7 +29,7 @@ ui <- fluidPage(
                      )
                  )), 
         tabPanel("Bivariate",
-                 sidebarLayout(position = "left", 
+                 verticalLayout(sidebarLayout(position = "left", 
                                sidebarPanel(varSelectInput("var1_0", "X Variable", data = estate, selected = "Area"),
                                             checkboxInput("log_1", "Log_Transform?"),
                                             varSelectInput("var2_0", "Y Variable", data = estate, selected = "Price($K)"), 
@@ -39,8 +38,20 @@ ui <- fluidPage(
                  ),
                  mainPanel(
                      plotOutput("plot")
-                 )
-                 )),
+                 ))
+                 ),
+                 conditionalPanel(condition = "input.ols",
+                                  sidebarLayout(position = "left",
+                                                sidebarPanel(verbatimTextOutput("ols_results"), 
+                                                             verbatimTextOutput("lm_1")), 
+                 mainPanel(
+                     splitLayout(cellWidths = c("50%", "50%"),
+                                 plotOutput("plot_res"), 
+                                 plotOutput("plot_qq"))
+                     
+                 )))
+                 ),
+        
         tabPanel("Spreadsheet", 
         dataTableOutput("table")
         )
@@ -80,14 +91,17 @@ server <- function(input, output) {
                     log() %>%  
                     t.test(alternative = "two.sided", mu = input$num, conf.level = 0.95) %>%  
                     tidy() %>% 
-                    select(p.value,estimate, conf.low, conf.high)  
+                    select(p.value,estimate, conf.low, conf.high)  %>%  
+                    rename(c('P-Value' = p.value, 'Estimate' = estimate, '95% Lower' = conf.low, '95% Higher' = conf.high))
            }
             else{
                 estate %>% 
                     select(input$var1) %>%  
                     t.test(alternative = "two.sided", mu = input$num, conf.level = 0.95) %>%  
                     tidy() %>% 
-                    select(p.value,estimate, conf.low, conf.high)
+                    select(p.value,estimate, conf.low, conf.high) %>%  
+                    rename(c('P-Value' = p.value, 'Estimate' = estimate, '95% Lower' = conf.low, '95% Higher' = conf.high))
+                
             }
         }
         else{
@@ -101,6 +115,73 @@ server <- function(input, output) {
         }
         
     })
+    
+    output$lm_1 <- renderPrint({
+        if(is.numeric(estate[[input$var2_0]]) && is.numeric(estate[[input$var1_0]])){
+            if(input$log_1 && input$log_2 && input$ols){
+        lmout_0 <- lm(log(estate[[input$var2_0]]) ~ log(estate[[input$var1_0]]), data = estate)
+        print(summary(lmout_0))
+            }
+            else if(input$ols){
+        lmout <- lm(estate[[input$var2_0]] ~ estate[[input$var1_0]], data = estate)
+        print(summary(lmout))
+            }
+        }
+        else{
+            print("not numeric")
+        }
+    })
+    output$plot_res <- renderPlot({
+        if(is.numeric(estate[[input$var1_0]]) && is.numeric(estate[[input$var2_0]])){
+            if(input$log_1 && input$log_2 && input$ols){
+                lmout_0 <- lm(log(estate[[input$var1_0]]) ~ log(estate[[input$var2_0]]), data = estate)
+                ggplot(lmout_0, aes(x=.fitted, y=.resid))+
+                    geom_point()+
+                    labs(x="x", y = "y", title = "Residuals vs Fitted") 
+                
+            }
+            if(input$ols)
+                lmout <- lm(estate[[input$var1_0]] ~ estate[[input$var2_0]], data = estate)
+            ggplot(lmout, aes(x=.fitted, y=.resid))+
+                geom_point()  +
+                labs(x="x", y = "y", title = "Residuals vs Fitted") 
+            
+            
+        }
+        
+        else{
+            print("not numeric")
+        }
+    })
+    
+   
+        
+    output$plot_qq <- renderPlot({
+
+        if(is.numeric(estate[[input$var1_0]]) && is.numeric(estate[[input$var2_0]])){
+            if(input$log_1 && input$log_2 && input$ols){
+                lmout_0 <- lm(log(estate[[input$var1_0]]) ~ log(estate[[input$var2_0]]), data = estate)
+                ggplot(lmout_0, aes(sample=.fitted)) +
+                    stat_qq() + 
+                    stat_qq_line() +
+                    labs(x="theoretical", y = "sample", title = "QQPlot") 
+                
+                
+
+                            }
+            else if (input$ols){
+                lmout <- lm(estate[[input$var1_0]] ~ estate[[input$var2_0]], data = estate)
+                ggplot(lmout, aes(sample=.fitted)) +
+                    stat_qq() + 
+                    stat_qq_line()+
+                    labs(x="theoretical", title = "sample",  title = "QQPlot")
+                }
+            else{
+                print("not numeric")
+            }
+        }
+    })
+        
     output$plot <- renderPlot({
         ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) 
         if (is.numeric(estate[[input$var1_0]]) && is.numeric(estate[[input$var2_0]])){

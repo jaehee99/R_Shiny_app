@@ -1,3 +1,5 @@
+# Jaehee Lee 
+
 library(shiny)
 library(tidyverse)
 library(broom)
@@ -79,6 +81,8 @@ server <- function(input, output) {
                     t.test(alternative = "two.sided", mu = input$num, conf.level = 0.95) %>%  
                     tidy() %>% 
                     select(p.value,estimate, conf.low, conf.high) 
+             #   rename("P-value" = p.value, "Estimate" = estimate, "95% Lower" = conf.low, "95% Higher" = conf.high)
+
             }
             else{
                 estate %>% 

@@ -5,7 +5,7 @@ library(tidyverse)
 library(broom)
 library(ggstance)
 
-estate <- read_csv("estate.csv", col_types = cols("AC" = col_factor(), "Pool" = col_factor(), "Highway" = col_factor()))
+estate <- read_csv("../../data/estate.csv", col_types = cols("AC" = col_factor(), "Pool" = col_factor(), "Highway" = col_factor()))
 estate %>% 
     mutate(Price = Price/1000) %>%  
     rename("Price($K)" = Price ) -> estate

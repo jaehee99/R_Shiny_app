@@ -1,5 +1,4 @@
 # Jaehee Lee 
-
 library(shiny)
 library(tidyverse)
 library(broom)
@@ -122,6 +121,14 @@ server <- function(input, output) {
         lmout_0 <- lm(log(estate[[input$var2_0]]) ~ log(estate[[input$var1_0]]), data = estate)
         print(summary(lmout_0))
             }
+            else if(input$log_1 && input$ols){
+        lmout_1 <- lm(estate[[input$var2_0]] ~ log(estate[[input$var1_0]]), data = estate)
+        print(summary(lmout_1))
+            }
+            else if(input$log_2 && input$ols){
+                lmout_2 <- lm(log(estate[[input$var2_0]]) ~ estate[[input$var1_0]], data = estate)
+                print(summary(lmout_2))
+            }
             else if(input$ols){
         lmout <- lm(estate[[input$var2_0]] ~ estate[[input$var1_0]], data = estate)
         print(summary(lmout))
@@ -138,24 +145,30 @@ server <- function(input, output) {
                 ggplot(lmout_0, aes(x=.fitted, y=.resid))+
                     geom_point()+
                     labs(x="x", y = "y", title = "Residuals vs Fitted") 
-                
+            }
+            else if(input$log_1 && input$ols){
+                lmout_1 <- lm(estate[[input$var2_0]] ~ log(estate[[input$var1_0]]), data = estate)
+                ggplot(lmout_1, aes(x=.fitted, y=.resid))+
+                    geom_point()+
+                    labs(x="x", y = "y", title = "Residuals vs Fitted") 
+            }
+            else if(input$log_2 && input$ols){
+                lmout_2 <- lm(log(estate[[input$var2_0]]) ~ estate[[input$var1_0]], data = estate)
+                ggplot(lmout_2, aes(x=.fitted, y=.resid))+
+                    geom_point()+
+                    labs(x="x", y = "y", title = "Residuals vs Fitted") 
             }
             if(input$ols)
                 lmout <- lm(estate[[input$var1_0]] ~ estate[[input$var2_0]], data = estate)
             ggplot(lmout, aes(x=.fitted, y=.resid))+
                 geom_point()  +
                 labs(x="x", y = "y", title = "Residuals vs Fitted") 
-            
-            
         }
         
         else{
             print("not numeric")
         }
     })
-    
-   
-        
     output$plot_qq <- renderPlot({
 
         if(is.numeric(estate[[input$var1_0]]) && is.numeric(estate[[input$var2_0]])){
@@ -165,23 +178,34 @@ server <- function(input, output) {
                     stat_qq() + 
                     stat_qq_line() +
                     labs(x="theoretical", y = "sample", title = "QQPlot") 
-                
-                
-
-                            }
+            }
+            
+            else if(input$log_1 && input$ols){
+                lmout_1 <- lm(estate[[input$var2_0]] ~ log(estate[[input$var1_0]]), data = estate)
+                ggplot(lmout_1, aes(sample=.fitted)) +
+                    stat_qq() + 
+                    stat_qq_line() +
+                    labs(x="theoretical", y = "sample", title = "QQPlot") 
+            }
+            else if(input$log_2 && input$ols){
+                lmout_2 <- lm(log(estate[[input$var2_0]]) ~ estate[[input$var1_0]], data = estate)
+                ggplot(lmout_2, aes(sample=.fitted)) +
+                    stat_qq() + 
+                    stat_qq_line() +
+                    labs(x="theoretical", y = "sample", title = "QQPlot") 
+            }
             else if (input$ols){
                 lmout <- lm(estate[[input$var1_0]] ~ estate[[input$var2_0]], data = estate)
                 ggplot(lmout, aes(sample=.fitted)) +
                     stat_qq() + 
-                    stat_qq_line()+
-                    labs(x="theoretical", title = "sample",  title = "QQPlot")
+                    stat_qq_line() +
+                   labs(x="theoretical", y = "sample", title = "QQPlot")
                 }
             else{
                 print("not numeric")
             }
         }
     })
-        
     output$plot <- renderPlot({
         ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) 
         if (is.numeric(estate[[input$var1_0]]) && is.numeric(estate[[input$var2_0]])){
@@ -190,7 +214,23 @@ server <- function(input, output) {
                     geom_point()+
                     scale_x_log10() +
                     scale_y_log10() +
-                    geom_smooth(method = "lm")
+                    geom_smooth(method = "lm") +
+                    labs(x = paste("Log(", input$var1_0,")"))+
+                    labs(y = paste("Log(", input$var2_0,")"))
+            }
+            else if(input$log_1 && input$ols){
+                ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0))+
+                    geom_point()+
+                    scale_x_log10() +
+                    geom_smooth(method = "lm") +
+                    labs(x = paste("Log(", input$var1_0,")"))
+            }
+            else if(input$log_2 && input$ols){
+                ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0))+
+                    geom_point()+
+                    scale_y_log10() +
+                    geom_smooth(method = "lm") +
+                    labs(y = paste("Log(", input$var2_0,")"))
             }
             else if(input$ols){
                 ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0))+
@@ -202,17 +242,25 @@ server <- function(input, output) {
                 ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0))+
                     geom_point()+
                     scale_x_log10() +
-                    scale_y_log10()
+                    scale_y_log10() +
+                    labs(x = paste("Log(", input$var1_0,")"))+
+                    labs(y = paste("Log(", input$var2_0,")"))
+                
+                
             }
             else if(input$log_1){
                 ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0))+
                     geom_point()+
-                    scale_x_log10()
+                    scale_x_log10() +
+                    labs(x = paste("Log(", input$var1_0,")"))
+                    
             }
             else if (input$log_2){
                 ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0))+
                     geom_point()+
-                    scale_y_log10()
+                    scale_y_log10() +
+                    labs(y = paste("Log(", input$var2_0,")"))
+                
             }
             else{
                 ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) +

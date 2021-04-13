@@ -80,10 +80,8 @@ server <- function(input, output) {
                     log() %>%  
                     t.test(alternative = "two.sided", mu = input$num, conf.level = 0.95) %>%  
                     tidy() %>% 
-                    select(p.value,estimate, conf.low, conf.high) 
-             #   rename("P-value" = p.value, "Estimate" = estimate, "95% Lower" = conf.low, "95% Higher" = conf.high)
-
-            }
+                    select(p.value,estimate, conf.low, conf.high)  
+           }
             else{
                 estate %>% 
                     select(input$var1) %>%  
@@ -92,6 +90,16 @@ server <- function(input, output) {
                     select(p.value,estimate, conf.low, conf.high)
             }
         }
+        else{
+            if(input$log){
+                validate(
+                    need(is.double(estate[[input$var1]]),
+                         "not numeric")
+                )
+            }
+                print("Variable is not numeric")            
+        }
+        
     })
     output$plot <- renderPlot({
         ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) 

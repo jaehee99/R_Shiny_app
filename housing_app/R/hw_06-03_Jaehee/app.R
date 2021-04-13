@@ -66,8 +66,29 @@ server <- function(input, output) {
                     )
                 }
             ggplot(estate, aes(x = !!input$var1))+ geom_bar()
-            }
+        }
+       
+
 })
+    output$t_test <- renderTable({
+        if (is.numeric(estate[[input$var1]])){
+            if(input$log){
+                estate %>% 
+                    select(input$var1) %>%  
+                    log() %>%  
+                    t.test(alternative = "two.sided", mu = input$num, conf.level = 0.95) %>%  
+                    tidy() %>% 
+                    select(p.value,estimate, conf.low, conf.high) 
+            }
+            else{
+                estate %>% 
+                    select(input$var1) %>%  
+                    t.test(alternative = "two.sided", mu = input$num, conf.level = 0.95) %>%  
+                    tidy() %>% 
+                    select(p.value,estimate, conf.low, conf.high)
+            }
+        }
+    })
     output$plot <- renderPlot({
         ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) 
         if (is.numeric(estate[[input$var1_0]]) && is.numeric(estate[[input$var2_0]])){

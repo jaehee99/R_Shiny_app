@@ -44,10 +44,8 @@ ui <- fluidPage(
                                                 sidebarPanel(verbatimTextOutput("ols_results"), 
                                                              verbatimTextOutput("lm_1")), 
                  mainPanel(
-                     splitLayout(cellWidths = c("50%", "50%"),
-                                 plotOutput("plot_res"), 
-                                 plotOutput("plot_qq"))
-                     
+                               column(width = 6, plotOutput("plot_res")),
+                                column(width = 6, plotOutput("plot_qq"))
                  )))
                  ),
         

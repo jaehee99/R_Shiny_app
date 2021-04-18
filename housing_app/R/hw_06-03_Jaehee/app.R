@@ -299,17 +299,12 @@ server <- function(input, output) {
                     geom_boxploth()
             }
         }
-        else {
-            if(input$log){
-                ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) + 
-                    geom_jitter()+
-                    scale_x_log10()
-            }
+     
             else{
                 ggplot(estate, aes(x = !!input$var1_0, y = !!input$var2_0)) + 
                     geom_jitter()
             }
-        }
+ 
     })
     output$table <- renderDataTable({
         keep(estate, ~ typeof(.) == "double")
